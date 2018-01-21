@@ -123,7 +123,8 @@ NOTES:
  * STEP 2: Modify the following functions according the coding rules.
  * 
  *   IMPORTANT. TO AVOID GRADING SURPRISES:
- *   1. Use the dlc compiler to check that your solutions conform
+p
+e the dlc compiler to check that your solutions conform
  *      to the coding rules.
  *   2. Use the BDD checker to formally verify that your solutions produce 
  *      the correct answers.
@@ -131,6 +132,7 @@ NOTES:
 
 
 #endif
+
 /* 
  * bitAnd - x&y using only ~ and | 
  *   Example: bitAnd(6, 5) = 4
@@ -139,8 +141,9 @@ NOTES:
  *   Rating: 1
  */
 int bitAnd(int x, int y) {
-  return 2;
+  return ~(~x | ~y);
 }
+
 /* 
  * getByte - Extract byte n from word x
  *   Bytes numbered from 0 (LSB) to 3 (MSB)
@@ -150,16 +153,11 @@ int bitAnd(int x, int y) {
  *   Rating: 2
  */
 int getByte(int x, int n) {
-
-
-
-
-
-
-
-  return 2;
-
+  /* right shift x by (n * 8) bits, then return the result & 0xFF */
+  int c = 255;
+  return (x >> (n << 3)) & c;
 }
+
 /* 
  * logicalShift - shift x to the right by n, using a logical shift
  *   Can assume that 0 <= n <= 31
@@ -169,8 +167,9 @@ int getByte(int x, int n) {
  *   Rating: 3 
  */
 int logicalShift(int x, int n) {
-  return 2;
+  return (x >> n) & ~((((!!n) << 31) >> n) << 1);
 }
+
 /*
  * bitCount - returns count of number of 1's in word
  *   Examples: bitCount(5) = 2, bitCount(7) = 3
@@ -181,6 +180,7 @@ int logicalShift(int x, int n) {
 int bitCount(int x) {
   return 2;
 }
+
 /* 
  * bang - Compute !x without using !
  *   Examples: bang(3) = 0, bang(0) = 1
@@ -191,6 +191,7 @@ int bitCount(int x) {
 int bang(int x) {
   return 2;
 }
+
 /* 
  * tmin - return minimum two's complement integer 
  *   Legal ops: ! ~ & ^ | + << >>

@@ -154,8 +154,7 @@ int bitAnd(int x, int y) {
  */
 int getByte(int x, int n) {
   /* right shift x by (n * 8) bits, then return the result & 0xFF */
-  int c = 255;
-  return (x >> (n << 3)) & c;
+  return (x >> (n << 3)) & 0xFF;
 }
 
 /* 
@@ -178,7 +177,27 @@ int logicalShift(int x, int n) {
  *   Rating: 4
  */
 int bitCount(int x) {
-  return 2;
+  int mask_1, mask_2, mask_3, mask_4, mask_5;;
+
+  mask_1 = 0x55 + (0x55 << 8);
+  mask_1 = mask_1 + (mask_1 << 16);
+
+  mask_2 = 0x33 + (0x33 << 8);
+  mask_2 = mask_2 + (mask_2 << 16);
+
+  mask_3 = 0x0F + (0x0F << 8);
+  mask_3 = mask_3 + (mask_3 << 16);
+
+  mask_4 = 0xFF + (0xFF << 16);
+
+  mask_5 = 0xFF + (0xFF << 8);
+
+  x = (x & mask_1) + ((x >> 1) & mask_1);
+  x = (x & mask_2) + ((x >> 2) & mask_2);
+  x = (x & mask_3) + ((x >> 4) & mask_3);
+  x = (x & mask_4) + ((x >> 8) & mask_4);
+  x = (x & mask_5) + ((x >> 16) & mask_5);
+  return x;
 }
 
 /* 
@@ -189,7 +208,7 @@ int bitCount(int x) {
  *   Rating: 4 
  */
 int bang(int x) {
-  return 2;
+  return ((~(x | (~x + 1))) >> 31) & 1;
 }
 
 /* 
@@ -199,8 +218,9 @@ int bang(int x) {
  *   Rating: 1
  */
 int tmin(void) {
-  return 2;
+  return 1 << 31;
 }
+
 /* 
  * fitsBits - return 1 if x can be represented as an 
  *  n-bit, two's complement integer.
@@ -211,8 +231,9 @@ int tmin(void) {
  *   Rating: 2
  */
 int fitsBits(int x, int n) {
-  return 2;
+  return !(((x >> (n + ~0)) + 1) >> 1);
 }
+
 /* 
  * divpwr2 - Compute x/(2^n), for 0 <= n <= 30
  *  Round toward zero
@@ -222,8 +243,10 @@ int fitsBits(int x, int n) {
  *   Rating: 2
  */
 int divpwr2(int x, int n) {
-    return 2;
+  int mask = (1 << n) + (~0);
+  return (x + ((x >> 31) & mask)) >> n;
 }
+
 /* 
  * negate - return -x 
  *   Example: negate(1) = -1.
@@ -232,8 +255,9 @@ int divpwr2(int x, int n) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return ~x + 1;
 }
+
 /* 
  * isPositive - return 1 if x > 0, return 0 otherwise 
  *   Example: isPositive(-1) = 0.
@@ -242,8 +266,9 @@ int negate(int x) {
  *   Rating: 3
  */
 int isPositive(int x) {
-  return 2;
+  return !(((x >> 31) & 1) | (!x));
 }
+
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
  *   Example: isLessOrEqual(4,5) = 1.
@@ -252,8 +277,13 @@ int isPositive(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int xor, oppo_sign, diff;
+  xor = x ^ y;
+  oppo_sign = xor & y;
+  diff = y + (~x + 1);
+  return !(((diff & ~xor) | oppo_sign) >> 31);
 }
+
 /*
  * ilog2 - return floor(log base 2 of x), where x > 0
  *   Example: ilog2(16) = 4
@@ -262,7 +292,19 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4
  */
 int ilog2(int x) {
-  return 2;
+  /* The idea is similar to the bitCount
+   * ans keeps track of the position of the most significant 1
+   */
+  int ans = 0;
+  /* ans = 0 if no 1's exist in the left 16 bits;
+   * ans = 16 if at least one 1 exists in the left 16 bits
+   */
+  ans += (!!(x >> 16)) << 4;
+  ans += (!!(x >> (8 + ans))) << 3;
+  ans += (!!(x >> (4 + ans))) << 2;
+  ans += (!!(x >> (2 + ans))) << 1;
+  ans += (!!(x >> (1 + ans))) << 0;
+  return ans;
 }
 /* 
  * float_neg - Return bit-level equivalent of expression -f for

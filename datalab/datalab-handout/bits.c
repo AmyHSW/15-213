@@ -154,7 +154,7 @@ int bitAnd(int x, int y) {
  */
 int getByte(int x, int n) {
   /* right shift x by (n * 8) bits, then return the result & 0xFF */
-  return (x >> (n << 3)) & 0xFF;
+  return (x >> (n << 3)) & 0xff;
 }
 
 /* 
@@ -185,12 +185,12 @@ int bitCount(int x) {
   mask_2 = 0x33 + (0x33 << 8);
   mask_2 = mask_2 + (mask_2 << 16);
 
-  mask_3 = 0x0F + (0x0F << 8);
+  mask_3 = 0x0F + (0x0f << 8);
   mask_3 = mask_3 + (mask_3 << 16);
 
-  mask_4 = 0xFF + (0xFF << 16);
+  mask_4 = 0xFF + (0xff << 16);
 
-  mask_5 = 0xFF + (0xFF << 8);
+  mask_5 = 0xFF + (0xff << 8);
 
   x = (x & mask_1) + ((x >> 1) & mask_1);
   x = (x & mask_2) + ((x >> 2) & mask_2);
@@ -318,7 +318,11 @@ int ilog2(int x) {
  *   Rating: 2
  */
 unsigned float_neg(unsigned uf) {
- return 2;
+  unsigned temp = uf & 0x7fffffff;
+  if (temp > 0x7f800000) {
+    return uf;
+  }
+  return uf ^ 0x80000000;
 }
 /* 
  * float_i2f - Return bit-level equivalent of expression (float) x
@@ -330,7 +334,25 @@ unsigned float_neg(unsigned uf) {
  *   Rating: 4
  */
 unsigned float_i2f(int x) {
-  return 2;
+  int s, exp, frac, carry;
+  s = 0;
+  exp = 31;
+  frac = 0;
+  carry = 0;
+  if (x == 0) return x;
+  if (x < 0) {
+    s = 0x80000000;
+    x = -x;
+  }
+  while (!(x & 0x80000000)) {
+    exp--;
+    x <<= 1;
+  }
+  if (((x & 0x1ff) == 0x180) || ((x & 0xff) > 0x80)) {
+    carry = 1;
+  }
+  frac = ((x & 0x7fffffff) >> 8) + carry;
+  return s + ((exp + 127) << 23) + frac;
 }
 /* 
  * float_twice - Return bit-level equivalent of expression 2*f for
@@ -344,5 +366,20 @@ unsigned float_i2f(int x) {
  *   Rating: 4
  */
 unsigned float_twice(unsigned uf) {
-  return 2;
+  /* uf is denormalized */
+  if ((uf & 0x7f800000) == 0) {
+    return (uf & 0x80000000) | (uf << 1);
+  }
+  /* uf is normalized */
+  if ((uf & 0x7f800000) != 0x7f800000) {
+    uf += (1 << 23);
+    /* if uf becomes inf after doubling, turn the fraction part to 0 */
+    if ((uf & 0x7f800000) == 0x7f800000) {
+      uf >>= 23;
+      uf <<= 23;
+    }
+    return uf;
+  }
+  /* uf is special case - NaN or inf */
+  return uf;
 }
